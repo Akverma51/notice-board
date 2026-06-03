@@ -1,5 +1,6 @@
 datasource db {
   provider = "mysql" // Or "postgresql" depending on your choice (TiDB uses mysql)
+   url      = env("DATABASE_URL")
 }
 
 generator client {

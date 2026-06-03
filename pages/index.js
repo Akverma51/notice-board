@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import Link from 'next/link';
 
-
 export async function getServerSideProps() {
-  const prisma = new PrismaClient();
   const notices = await prisma.notice.findMany({
     orderBy: [
       { priority: 'desc' },
@@ -33,7 +31,7 @@ export default function NoticesHome({ initialNotices }) {
           No notices available right now.
         </div>
       ) : (
-        // Responsive CSS Grid: 1 col on mobile, 2 on tablet, 3 on desktop
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {initialNotices.map((notice) => (
             <div 
@@ -48,7 +46,7 @@ export default function NoticesHome({ initialNotices }) {
                     src={notice.imageUrl} 
                     alt={notice.title} 
                     className="w-full h-48 object-cover"
-                    onError={(e) => { e.target.style.display = 'none'; }} // Fallback if image link breaks
+                    onError={(e) => { e.target.style.display = 'none'; }} 
                   />
                 )}
                 

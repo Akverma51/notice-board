@@ -1,47 +1,49 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
 
 export default function AddNotice() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    title: '',
-    body: '',
-    category: 'General',
-    priority: 'Normal',
-    publishDate: '',
-    imageUrl: '',
-  });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      title: "",
+      body: "",
+      category: "General",
+      priority: "Normal",
+      publishDate: "",
+      imageUrl: "",
+    },
+  });
+
+  const onSubmit = async (data) => {
     setLoading(true);
-    setError('');
-
-    // Extra Date validation check
-    if (isNaN(Date.parse(formData.publishDate))) {
-      setError('Please enter a valid date.');
-      setLoading(false);
-      return;
-    }
+    setServerError("");
 
     try {
-      const res = await fetch('/api/notices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      const res = await fetch("/api/notices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
 
       if (res.ok) {
-        router.push('/');
+        router.push("/");
       } else {
-        const data = await res.json();
-        setError(data.error || 'Something went wrong.');
+        const result = await res.json();
+        setServerError(result.error || "Something went wrong");
       }
-    } catch (err) {
-      setError('Failed to submit form.');
+    } catch (error) {
+      setServerError("Failed to submit form");
     } finally {
       setLoading(false);
     }
@@ -50,106 +52,163 @@ export default function AddNotice() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Add New Notice</h1>
-        <Link href="/" className="text-blue-500 hover:underline">View All</Link>
+        <h1 className="text-2xl font-bold">Add New Notice</h1>
+        <Link href="/">View All</Link>
       </div>
-      
-      {error && <p className="text-red-500 mb-4 text-sm font-medium">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {serverError && (
+        <p className="text-red-500 mb-4">{serverError}</p>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+        {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Title *</label>
+          <label>Title *</label>
           <input
             type="text"
-            required
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full p-2 border rounded"
+            {...register("title", {
+              required: "Title is required",
+              minLength: {
+                value: 5,
+                message: "Title must be at least 5 characters",
+              },
+            })}
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm">
+              {errors.title.message}
+            </p>
+          )}
         </div>
 
+        {/* Body */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Body *</label>
+          <label>Body *</label>
           <textarea
-            required
             rows="4"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={formData.body}
-            onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+            className="w-full p-2 border rounded"
+            {...register("body", {
+              required: "Body is required",
+              minLength: {
+                value: 10,
+                message: "Body must be at least 10 characters",
+              },
+            })}
           />
+          {errors.body && (
+            <p className="text-red-500 text-sm">
+              {errors.body.message}
+            </p>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Category *</label>
-            <select
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="General">General</option>
-              <option value="Exam">Exam</option>
-              <option value="Event">Event</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Priority *</label>
-            <div className="mt-2 flex space-x-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="priority"
-                  value="Normal"
-                  checked={formData.priority === 'Normal'}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                  className="text-blue-600"
-                />
-                <span className="ml-2 text-sm text-gray-700">Normal</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="priority"
-                  value="Urgent"
-                  checked={formData.priority === 'Urgent'}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                  className="text-red-600"
-                />
-                <span className="ml-2 text-sm text-gray-700">Urgent</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
+        {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Publish Date *</label>
+          <label>Category *</label>
+          <select
+            className="w-full p-2 border rounded"
+            {...register("category", {
+              required: "Category is required",
+            })}
+          >
+            <option value="General">General</option>
+            <option value="Exam">Exam</option>
+            <option value="Event">Event</option>
+          </select>
+
+          {errors.category && (
+            <p className="text-red-500 text-sm">
+              {errors.category.message}
+            </p>
+          )}
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label>Priority *</label>
+
+          <div className="flex gap-4 mt-2">
+            <label>
+              <input
+                type="radio"
+                value="Normal"
+                {...register("priority", {
+                  required: "Priority is required",
+                })}
+              />
+              Normal
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                value="Urgent"
+                {...register("priority", {
+                  required: "Priority is required",
+                })}
+              />
+              Urgent
+            </label>
+          </div>
+
+          {errors.priority && (
+            <p className="text-red-500 text-sm">
+              {errors.priority.message}
+            </p>
+          )}
+        </div>
+
+        {/* Publish Date */}
+        <div>
+          <label>Publish Date *</label>
           <input
             type="date"
-            required
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={formData.publishDate}
-            onChange={(e) => setFormData({ ...formData, publishDate: e.target.value })}
+            className="w-full p-2 border rounded"
+            {...register("publishDate", {
+              required: "Publish date is required",
+              validate: (value) =>
+                !isNaN(Date.parse(value)) || "Invalid date",
+            })}
           />
+
+          {errors.publishDate && (
+            <p className="text-red-500 text-sm">
+              {errors.publishDate.message}
+            </p>
+          )}
         </div>
 
+        {/* Image URL */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Image URL (Optional)</label>
+          <label>Image URL</label>
           <input
-            type="url"
+            type="text"
             placeholder="https://example.com/image.jpg"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={formData.imageUrl}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+            className="w-full p-2 border rounded"
+            {...register("imageUrl", {
+              pattern: {
+                value:
+                  /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/i,
+                message: "Enter a valid image URL",
+              },
+            })}
           />
+
+          {errors.imageUrl && (
+            <p className="text-red-500 text-sm">
+              {errors.imageUrl.message}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition disabled:bg-blue-300"
+          className="w-full bg-blue-600 text-white p-2 rounded"
         >
-          {loading ? 'Saving...' : 'Create Notice'}
+          {loading ? "Saving..." : "Create Notice"}
         </button>
       </form>
     </div>
