@@ -1,6 +1,5 @@
 datasource db {
   provider = "mysql" // Or "postgresql" depending on your choice (TiDB uses mysql)
-
 }
 
 generator client {
@@ -25,6 +24,6 @@ model Notice {
   category    Category
   priority    Priority @default(Normal)
   publishDate DateTime
-  imageUrl    String?  // Optional image string
+  imageUrl    String? // Optional image string
   createdAt   DateTime @default(now())
 }
